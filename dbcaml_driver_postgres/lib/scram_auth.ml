@@ -1,5 +1,7 @@
+open Riot
+
 open Riot.Logger.Make (struct
-  let namespace = ["dbcaml"; "dbcaml_postgres_driver"; "sasl"]
+  let namespace = ["dbcaml"; "dbcaml_postgres_driver"]
 end)
 
 let ( let* ) = Result.bind
@@ -82,6 +84,7 @@ let authenticate conn is_plus username password =
       Buffer.add_int32_be buf (Int32.of_int (Bytes.length response));
       Buffer.add_bytes buf response);
 
+  Logger.debug (fun f -> f "Sending initial SCRAM-SHA-256 message to server");
   let* _ = Pg.send conn buf in
   let* (_, _, server_first_message) = Pg.receive conn in
   let server_first_message =
@@ -113,6 +116,7 @@ let authenticate conn is_plus username password =
   Buffer.add_int32_be buf (Int32.of_int (String.length client_final + 4));
   Buffer.add_string buf client_final;
 
+  Logger.debug (fun f -> f "Sending final SCRAM-SHA-256 message to server");
   let* _ = Pg.send conn buf in
   let* (_, _, message) = Pg.receive conn in
 
@@ -132,7 +136,8 @@ let authenticate conn is_plus username password =
     String.concat "," [first_bare; server_first_message; without_proof]
   in
 
-  if verify_server_proof server_key auth_message verifier then
+  match verify_server_proof server_key auth_message verifier with
+  | true ->
+    Logger.debug (fun f -> f "SCRAM authentication successful");
     Ok ()
-  else
-    Error (`Msg "Server proof verification failed")
+  | false -> Error (`Msg "Server proof verification failed")

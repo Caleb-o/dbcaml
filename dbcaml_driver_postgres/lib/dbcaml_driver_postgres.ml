@@ -27,6 +27,7 @@ module Postgres = struct
 
     let execute (_ : Pg.t) (_ : Dbcaml.Connection.param list) _ :
         (bytes, Dbcaml.Res.execution_error) Dbcaml.Res.result =
+      (*TODO: implement a code that get a query and send it to the database and then parses the message and return the value *)
       Error (Dbcaml.Res.GeneralError "Not implemented")
     in
 

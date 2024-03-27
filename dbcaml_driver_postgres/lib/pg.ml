@@ -18,7 +18,6 @@ type t =
 
 let send (Conn { writer; _ } as conn) buffer =
   let message = Buffer.contents buffer in
-  debug (fun f -> f "Sending message: %S" message);
 
   let* () = IO.write_all writer ~buf:message in
   Ok conn

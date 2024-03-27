@@ -1,4 +1,9 @@
+open Riot
 module Bs = Bytestring
+
+open Riot.Logger.Make (struct
+  let namespace = ["dbcaml"; "dbcaml_postgres_driver"]
+end)
 
 let ( let* ) = Result.bind
 
@@ -13,6 +18,7 @@ let start conn username database =
       Buffer_tools.put_str_null b database;
       Buffer.add_char b '\000');
 
+  Logger.debug (fun f -> f "Sending startup message");
   let* _ = Pg.send conn buffer in
 
   let* (_, message_format, message) = Pg.receive conn in
